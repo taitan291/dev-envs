@@ -1,5 +1,5 @@
 {
-  description = "Rust development environment";
+  description = "Typst development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -8,16 +8,11 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs @ {
     flake-parts,
     treefmt-nix,
-    fenix,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -33,38 +28,23 @@
       perSystem = {
         config,
         pkgs,
-        system,
         ...
-      }: let
-        toolchain = fenix.packages.${system}.stable.withComponents [
-          "cargo"
-          "clippy"
-          "rust-src"
-          "rustc"
-          "rustfmt"
-          "rust-analyzer"
-        ];
-      in {
+      }: {
         treefmt = {
           projectRootFile = "flake.nix";
           programs = {
             alejandra.enable = true;
-            rustfmt = {
-              enable = true;
-              package = toolchain;
-            };
-            taplo.enable = true;
+            typstyle.enable = true;
           };
         };
 
         devShells.default = pkgs.mkShell {
           inputsFrom = [config.treefmt.build.devShell];
           packages = [
-            toolchain
-            pkgs.cargo-watch
-            pkgs.cargo-nextest
+            pkgs.typst
+            pkgs.tinymist
+            pkgs.typstyle
           ];
-          RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
         };
       };
     };
